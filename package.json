@@ -1,0 +1,15 @@
+{
+  "name": "@lilia/chart-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Framework-agnostic core for the Lilia LaTeX chart tool — chart spec model + pgfplots generator + preview projection. No React/DOM. Sibling of @lilia/table-core (charts = table data + a chart spec).",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "files": ["dist", "src"],
+  "sideEffects": false,
+  "scripts": { "build": "tsc -p tsconfig.json", "typecheck": "tsc --noEmit" },
+  "license": "UNLICENSED"
+}
