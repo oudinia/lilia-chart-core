@@ -10,9 +10,11 @@
   "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
   "files": ["dist", "src"],
   "sideEffects": false,
+  "repository": { "type": "git", "url": "git+https://github.com/oudinia/lilia-chart-core.git" },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit",
+    "prepare": "tsc -p tsconfig.json",
     "pretest": "tsc -p tsconfig.json",
     "test": "node --test test/"
   },
