@@ -203,6 +203,61 @@ function histogramToLatex(data: ChartData, spec: ChartSpec): string {
 
 /** Project the (data, spec) into plain {x, points:[{label, points:[{x,y}]}]} for a
  *  client-side SVG preview (preview only — pgfplots is the real output). */
+/**
+ * Pinned pgfplots `compat` level. `chartToLatex` output is generated against
+ * this; bump deliberately (it changes spacing/legend/axis defaults).
+ */
+export const PGFPLOTS_COMPAT = "1.18"
+
+/**
+ * The preamble lines a document needs to compile `chartToLatex` output.
+ * `chartToLatex` returns only the `tikzpicture`, so a bare paste fails without
+ * this — every surface should show it ("add this to your preamble").
+ */
+export function requiredPreamble(): string {
+  return `\\usepackage{pgfplots}\n\\pgfplotsset{compat=${PGFPLOTS_COMPAT}}`
+}
+
+export interface DocumentOptions {
+  /** `standalone` (tight crop — good for a single figure, default) or `article`. */
+  documentClass?: "standalone" | "article"
+}
+
+/**
+ * A full, compilable LaTeX document wrapping the chart — the "copy full example"
+ * / Overleaf paste-and-go form. Default `standalone` crops to the figure.
+ */
+export function chartToLatexDocument(data: ChartData, spec: ChartSpec, opts: DocumentOptions = {}): string {
+  const cls = opts.documentClass ?? "standalone"
+  const docclass = cls === "standalone" ? "\\documentclass[border=4pt]{standalone}" : "\\documentclass{article}"
+  return [docclass, requiredPreamble(), "\\begin{document}", chartToLatex(data, spec), "\\end{document}", ""].join("\n")
+}
+
+/**
+ * The three copy modes a chart surface offers, generated consistently from one
+ * (data, spec) so "data → chart" never diverges across web / editor / mobile:
+ *  - `figure`       → the `tikzpicture` only (paste into a doc that already
+ *                     loads pgfplots — e.g. inside Lilia, where the preamble is managed).
+ *  - `withPreamble` → the figure annotated with the preamble lines it needs.
+ *  - `document`     → a full compilable standalone document (Overleaf paste-and-go).
+ */
+export interface ChartOutputs {
+  figure: string
+  withPreamble: string
+  document: string
+}
+export function chartOutputs(data: ChartData, spec: ChartSpec): ChartOutputs {
+  const figure = chartToLatex(data, spec)
+  const withPreamble = [
+    "% ── add these lines to your preamble ──",
+    requiredPreamble(),
+    "",
+    "% ── the figure (in your document body) ──",
+    figure,
+  ].join("\n")
+  return { figure, withPreamble, document: chartToLatexDocument(data, spec) }
+}
+
 export interface PreviewPoint {
   x: number
   y: number

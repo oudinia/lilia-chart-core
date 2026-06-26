@@ -7,6 +7,10 @@ import {
   validateChartSpec,
   toPreview,
   CHART_TYPES,
+  requiredPreamble,
+  chartToLatexDocument,
+  chartOutputs,
+  PGFPLOTS_COMPAT,
 } from "../dist/index.js"
 
 const data = {
@@ -80,4 +84,32 @@ test("validateChartSpec rejects junk and falls back to defaults", () => {
 
 test("CHART_TYPES advertises histogram", () => {
   assert.ok(CHART_TYPES.some((t) => t.value === "histogram"))
+})
+
+test("requiredPreamble loads pgfplots at the pinned compat", () => {
+  const p = requiredPreamble()
+  assert.match(p, /\\usepackage\{pgfplots\}/)
+  assert.match(p, new RegExp(`compat=${PGFPLOTS_COMPAT.replace(".", "\\.")}`))
+})
+
+test("chartToLatexDocument is a full compilable document containing the figure", () => {
+  const spec = defaultSpec(data)
+  const doc = chartToLatexDocument(data, spec)
+  assert.match(doc, /\\documentclass\[border=4pt\]\{standalone\}/)
+  assert.match(doc, /\\usepackage\{pgfplots\}/)
+  assert.match(doc, /\\begin\{document\}/)
+  assert.match(doc, /\\begin\{tikzpicture\}/)
+  assert.match(doc, /\\end\{document\}/)
+  // article variant
+  assert.match(chartToLatexDocument(data, spec, { documentClass: "article" }), /\\documentclass\{article\}/)
+})
+
+test("chartOutputs returns the three consistent copy modes", () => {
+  const spec = defaultSpec(data)
+  const o = chartOutputs(data, spec)
+  assert.equal(o.figure, chartToLatex(data, spec)) // figure === raw generator
+  assert.equal(o.document, chartToLatexDocument(data, spec))
+  assert.match(o.withPreamble, /add these lines to your preamble/)
+  assert.match(o.withPreamble, /\\usepackage\{pgfplots\}/)
+  assert.ok(o.withPreamble.includes(o.figure)) // figure embedded in the annotated form
 })
