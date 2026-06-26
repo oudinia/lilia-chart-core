@@ -76,7 +76,7 @@ export function parseDelimited(text: string): ChartData {
   const lines = String(text ?? "")
     .replace(/\r/g, "")
     .split("\n")
-    .filter((l) => l.length > 0)
+    .filter((l) => l.trim().length > 0)
   if (lines.length === 0) return { header: [], rows: [] }
   const delim = lines[0].includes("\t") ? "\t" : ","
   const grid = lines.map((l) => l.split(delim).map((c) => c.trim()))
