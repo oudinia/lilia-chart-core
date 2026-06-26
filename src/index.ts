@@ -65,6 +65,30 @@ export const CHART_SAMPLE_DATA: ChartData = {
   ],
 }
 
+/**
+ * Parse pasted Excel / Google Sheets / CSV text into ChartData (first row =
+ * header). Mirrors @lilia/table-core's `parsePaste` delimiter rules — tab wins
+ * over comma, ragged rows padded to the widest, cells trimmed — so the same
+ * paste-grid feeds both the table and the chart tools. Returns empty ChartData
+ * when there's nothing tabular.
+ */
+export function parseDelimited(text: string): ChartData {
+  const lines = String(text ?? "")
+    .replace(/\r/g, "")
+    .split("\n")
+    .filter((l) => l.length > 0)
+  if (lines.length === 0) return { header: [], rows: [] }
+  const delim = lines[0].includes("\t") ? "\t" : ","
+  const grid = lines.map((l) => l.split(delim).map((c) => c.trim()))
+  const cols = Math.max(...grid.map((r) => r.length))
+  const norm = grid.map((r) => {
+    const x = r.slice()
+    while (x.length < cols) x.push("")
+    return x
+  })
+  return { header: norm[0], rows: norm.slice(1) }
+}
+
 /** Default spec for a dataset: x = first column, every other column a series. */
 export function defaultSpec(data: ChartData): ChartSpec {
   const series: Series[] = data.header

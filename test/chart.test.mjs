@@ -11,6 +11,7 @@ import {
   chartToLatexDocument,
   chartOutputs,
   PGFPLOTS_COMPAT,
+  parseDelimited,
 } from "../dist/index.js"
 
 const data = {
@@ -84,6 +85,28 @@ test("validateChartSpec rejects junk and falls back to defaults", () => {
 
 test("CHART_TYPES advertises histogram", () => {
   assert.ok(CHART_TYPES.some((t) => t.value === "histogram"))
+})
+
+test("parseDelimited: TSV (Excel/Sheets paste) → header + rows", () => {
+  const d = parseDelimited("Epoch\tBaseline\tOurs\n1\t0.71\t0.74\n2\t0.82\t0.88")
+  assert.deepEqual(d.header, ["Epoch", "Baseline", "Ours"])
+  assert.equal(d.rows.length, 2)
+  assert.deepEqual(d.rows[0], ["1", "0.71", "0.74"])
+})
+
+test("parseDelimited: CSV + ragged rows padded; trims cells", () => {
+  const d = parseDelimited("x, y, z\n1, 2\n3, 4, 5")
+  assert.deepEqual(d.header, ["x", "y", "z"])
+  assert.deepEqual(d.rows[0], ["1", "2", ""]) // padded to width 3
+  assert.deepEqual(d.rows[1], ["3", "4", "5"])
+})
+
+test("parseDelimited: empty/whitespace → empty ChartData; feeds defaultSpec", () => {
+  assert.deepEqual(parseDelimited("   \n\n"), { header: [], rows: [] })
+  const d = parseDelimited("Epoch\tAcc\n1\t0.9\n2\t0.95")
+  const spec = defaultSpec(d)
+  assert.equal(spec.xCol, 0)
+  assert.equal(spec.series.length, 1) // Acc
 })
 
 test("requiredPreamble loads pgfplots at the pinned compat", () => {
